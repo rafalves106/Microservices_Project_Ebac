@@ -1,0 +1,12 @@
+# Maven
+/target/
+
+# IDE files
+.idea/
+*.iml
+
+# Docker
+.dockerignore
+*.log
+
+config-repo/
