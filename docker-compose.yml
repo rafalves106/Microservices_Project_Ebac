@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  mongodb_produtos:
+    image: mongo:latest
+    container_name: mongodb_produtos
+    ports:
+      - "27017:27017"
+    volumes:
+      - produtos_data:/data/db
+
+  mongodb_clientes:
+    image: mongo:latest
+    container_name: mongodb_clientes
+    ports:
+      - "27018:27017"
+    volumes:
+      - clientes_data:/data/db
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/config-repo
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///config-repo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  produtos-service:
+    build:
+      context: ./produtos-service
+      dockerfile: Dockerfile
+    container_name: produtos-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mongodb_produtos:
+        condition: service_started
+    entrypoint: [ "java", "-jar", "/app.jar" ]
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+
+  clientes-service:
+    build:
+      context: ./clientes-service
+      dockerfile: Dockerfile
+    container_name: clientes-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      mongodb_clientes:
+        condition: service_started
+    entrypoint: [ "java", "-jar", "/app.jar" ]
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+
+volumes:
+  produtos_data:
+  clientes_data:
