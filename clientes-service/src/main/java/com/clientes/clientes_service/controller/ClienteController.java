@@ -179,6 +179,18 @@ public class ClienteController {
                             }
                             """
             ))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(name = "Erro de Dados Inválidos",
+                                    value = """
+            {
+            "status": 400,
+                    "error": "Bad Request",
+                    "message": "Dados inválidos fornecidos",
+                    "timestamp": "2024-06-01T15:30:00"
+                    }
+                    """))),
             @ApiResponse(responseCode = "404", description = "Nenhum cliente encontrado com o ID fornecido",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ApiError.class),
@@ -193,7 +205,7 @@ public class ClienteController {
                     """)))
     })
     @PutMapping("/{id}")
-    public Cliente atualizar(@Parameter(description = "O ID do cliente a ser atualizado") String id, @RequestBody Cliente clienteAtualizado){
+    public Cliente atualizar(@Valid @Parameter(description = "O ID do cliente a ser atualizado") String id, @RequestBody Cliente clienteAtualizado){
         return clienteRepository.findById(id)
                 .map(cliente -> {
                     cliente.setNome(clienteAtualizado.getNome());
